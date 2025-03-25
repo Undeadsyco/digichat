@@ -1,0 +1,9 @@
+runtime: nodejs18
+service: "digichat"
+
+env_variables:
+  DATABASE_IP: 34.136.216.153
+  DATABASE_NAME: "digichat"
+  DATABASE_USERNAME: "root"
+  DATABASE_PASSWORD: "MuddHawg!99&"
+  DATABASE_INSTANCE: "portfolio-419106:us-central1:digi-chat"

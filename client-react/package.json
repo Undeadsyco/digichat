@@ -1,22 +1,25 @@
 {
   "name": "client-react",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
   "proxy": "http://localhost:3001",
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^1.2.35",
-    "@fortawesome/free-brands-svg-icons": "^5.15.3",
-    "@fortawesome/free-solid-svg-icons": "^5.15.3",
-    "@fortawesome/react-fontawesome": "^0.1.14",
+    "@fortawesome/fontawesome-svg-core": "^6.5.2",
+    "@fortawesome/free-brands-svg-icons": "^6.5.2",
+    "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@fortawesome/react-fontawesome": "^0.2.0",
     "axios": "^1.6.7",
+    "emoji-picker-react": "^4.9.2",
     "formik": "^2.2.9",
     "framer-motion": "^4.1.17",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
+    "prop-types": "^15.8.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-error-boundary": "^4.0.13",
     "react-icons": "^4.2.0",
-    "react-redux": "^7.2.4",
-    "react-router-dom": "^5.2.0",
-    "react-scripts": "^5.0.1",
+    "react-router-dom": "^6.23.0",
+    "react-select": "^5.8.0",
+    "recoil": "^0.7.7",
     "redux": "^4.1.0",
     "yup": "^0.32.9"
   },
@@ -40,5 +43,14 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "autoprefixer": "^10.4.19",
+    "better-docs": "^2.7.3",
+    "jsdoc": "^4.0.2",
+    "postcss": "^8.4.38",
+    "react-scripts": "^5.0.1",
+    "tailwindcss": "^3.4.3"
   }
 }

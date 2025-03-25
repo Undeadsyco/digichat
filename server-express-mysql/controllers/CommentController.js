@@ -1,16 +1,24 @@
-module.exports = class CommentController {
-  static #model = require('../models/index').comment;
+const Controller = require('./Controller');
 
+module.exports = class CommentController extends Controller {
   static async #getCommentById(id, populate = false) { }
 
-  static async #getAllComments(filters = {}, populate = false) { }
+  static async #getAllComments(filters = {}) {
+    return await CommentController.commentModel.findAll({
+      where: filters,
+      include: {
+        association: 'author',
+        attributes: ['userId', 'userName'],
+      }
+    });
+  }
 
   static async getAllComments(req, res, next) {
-    if (!req.token) next({ error: new Error("Token not found") });
+    if (!req.token) res.redirect("/login");
     try {
-      const comments = await CommentController.#model.findAll();
+      const comments = await CommentController.#getAllComments({ postId: req.params.postId });
       res.header('Content-Type', 'application/json');
-      res.send(JSON.stringify({ comments }));
+      res.status(200).send({ comments });
     } catch (error) {
       next({ error });
     }
@@ -23,12 +31,17 @@ module.exports = class CommentController {
    * @param {import("express").NextFunction} next 
    */
   static async createComment(req, res, next) {
-    if (!req.token) next({ error: new Error("Token not found") });
+    if (!req.token) res.redirect("/login");
     try {
       const { postId, body } = req.body;
-      const comment = await CommentController.#model.create({ postId, authorId: req.token.userId, body });
-      const author = await comment.getAuthor();
-      res.status(201).send({ comment: { ...comment.dataValues, author } });
+      const comment = await CommentController.commentModel.create(
+        { postId, authorId: req.token.userId, body },
+      );
+      const author = await comment.getAuthor({
+        attributes: ['userId', 'userName'],
+      });
+      console.log(author)
+      res.status(201).send({ comment: { ...comment.dataValues, author: author.dataValues } });
     } catch (error) {
       next({ error });
     }
@@ -41,9 +54,9 @@ module.exports = class CommentController {
    * @param {import("express").NextFunction} next 
    */
   static async deleteComment(req, res, next) {
-    if (!req.token) next({ error: new Error("Token not found") });
+    if (!req.token) res.redirect("/login");
     try {
-      const comment = await CommentController.#model.findByPk(req.params.commentId);
+      const comment = await CommentController.commentModel.findByPk(req.params.commentId);
       if (!comment) throw new Error('Comment not found');
 
       if (comment.authorId !== req.token.userId) throw new Error('Unauthorized');

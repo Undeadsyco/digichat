@@ -2,6 +2,8 @@ import authAxios from "./authAxios";
 
 const userBaseUrl = "/api/users";
 const friendsBaseUrl = `${userBaseUrl}/friends`;
+const requestsBaseUrl = `${userBaseUrl}/requests`;
+const blockBaseUrl = `${userBaseUrl}/block`;
 
 /**
  * @typedef {Object} actionoObj
@@ -13,122 +15,156 @@ const friendsBaseUrl = `${userBaseUrl}/friends`;
  * @type {userActions}
  */
 const userActions = {
-  getUsers: {
-    key: 'GET_USERS',
-    /** @returns {Promise<import("../../../server-express-mysql/controllers/UserContoller").user[]>} */
-    action: async () => {
-      try {
-        const req = await authAxios.get(`${userBaseUrl}`);
-        const res = await req.data;
-        return res.users;
-      } catch (error) {
-        console.log(error);
-      }
-    }
+  /**
+   * 
+   * @returns
+   */
+  getUsers: async () => {
+    const req = await authAxios.get(`${userBaseUrl}`);
+    const res = await req.data;
+    return { type: 'GET_USERS_SUCCESS', payload: res.users };
   },
-  getUser: {
-    key: 'GET_USER',
-    /** @param {(string|number)} userId */
-    action: async (userId) => {
-      try {
-        const req = await authAxios.get(`${userBaseUrl}/${userId}`);
-        const res = await req.data;
-        return res.user;
-      } catch (error) {
-        console.log(error);
-      }
-    }
+  // TODO: implement get user profile
+  getUser: async (userId) => {
+    const req = await authAxios.get(`${userBaseUrl}/${userId}`);
+    const res = await req.data;
+    return res.user;
   },
-  addFriend: {
-    key: 'ADD_FRIEND',
-    /** @param {(string|number)} addresseeId */
-    action: async (addresseeId) => {
-      try {
-        if ((await authAxios.get(`${friendsBaseUrl}/add/${addresseeId}`)).status !== 200) {
-          setTimeout(() => { alert('Failed to add friend') }, 100);
-          return;
-        }
-        return addresseeId;
-      } catch (error) {
-        console.log(error);
-      }
-    }
+  /**
+   * 
+   * @returns 
+   */
+  getRelationships: async () => {
+    const req = await authAxios.get(`${friendsBaseUrl}`);
+    const res = await req.data;
+    return res.relationships;
   },
-  acceptRequest: {
-    key: 'ACCEPT_REQUEST',
-    /** @param {(string|number)} addresseeId */
-    action: async (addresseeId) => {
-      try {
-        if ((await authAxios.get(`${friendsBaseUrl}/accept/${addresseeId}`)).status !== 200) {
-          setTimeout(() => { alert('Failed to accept friend') }, 100);
-          return;
-        }
-        return addresseeId;
-      } catch (error) {
-        console.log(error);
-      }
-    }
+  /**
+   * 
+   * @returns 
+   */
+  getIncoming: async () => {
+    const req = await authAxios.get(`${requestsBaseUrl}/incoming`);
+    const res = await req.data;
+    return res.incoming;
   },
-  confirmAccepted: {
-    key: 'ACCEPT_REQUEST',
-    /** @param {(string|number)} addresseeId */
-    action: async (addresseeId) => {
-      try {
-        if ((await authAxios.get(`${friendsBaseUrl}/confirm/accepted/${addresseeId}`)).status !== 200) {
-          setTimeout(() => { alert('Failed to confirm friend') }, 100);
-          return;
-        }
-        return addresseeId;
-      } catch (error) {
-        console.log(error);
-      }
-    }
+  /**
+   * 
+   * @returns 
+   */
+  getOutgoing: async () => {
+    const req = await authAxios.get(`${requestsBaseUrl}/outgoing`);
+    const res = await req.data;
+    return res.outgoing;
   },
-  rejectRequest: {
-    key: 'REJECT_REQUEST',
-    /** @param {(string|number)} addresseeId */
-    action: async (addresseeId) => {
-      try {
-        if ((await authAxios.get(`${friendsBaseUrl}/reject/${addresseeId}`)).status !== 200) {
-          setTimeout(() => { alert('Failed to reject friend') }, 100);
-          return;
-        }
-        return addresseeId;
-      } catch (error) {
-        console.log(error);
-      }
+  // TODO: implement send friend request
+  /**
+   * 
+   * @param {Object} data
+   * @param {string} data.type
+   * @param {(number|string)} data.id 
+   * @returns 
+   */
+  sendRequest: async ({ type, id }) => {
+    if ((await authAxios.get(`api/${type}/requests/send/${id}`)).status !== 200) {
+      setTimeout(() => { alert('Failed to add friend') }, 100);
+      return;
     }
+    return { type: 'SEND_REQUEST_SUCCESS', payload: id };
   },
-  confirmRejected: {
-    key: 'REJECT_REQUEST',
-    /** @param {(string|number)} addresseeId */
-    action: async (addresseeId) => {
-      try {
-        if ((await authAxios.get(`${friendsBaseUrl}/confirm/rejected/${addresseeId}`)).status !== 200) {
-          setTimeout(() => { alert('Failed to confirm friend') }, 100);
-          return;
-        }
-        return addresseeId;
-      } catch (error) {
-        console.log(error);
-      }
+  // TODO: implement accept friend request
+  /**
+   * 
+   * @param {(number|string)} addresseeId 
+   * @returns 
+   */
+  acceptRequest: async (addresseeId) => {
+    if ((await authAxios.get(`${requestsBaseUrl}/accept/${addresseeId}`)).status !== 200) {
+      setTimeout(() => { alert('Failed to accept friend') }, 100);
+      return;
     }
+    return { type: 'ACCEPT_REQUEST_SUCCESS', payload: addresseeId };
   },
-  deleteFriend: {
-    key: 'DELETE_FRIEND',
-    /** @param {(string|number)} addresseeId */
-    action: async (addresseeId) => {
-      try {
-        if ((await authAxios.get(`${friendsBaseUrl}/delete/${addresseeId}`)).status !== 200) {
-          setTimeout(() => { alert('Failed to delete friend') }, 100);
-          return;
-        }
-        return addresseeId;
-      } catch (error) {
-        console.log(error);
-      }
+  // TODO: implement reject friend request
+  /**
+   * 
+   * @param {(number|string)} addresseeId 
+   * @returns 
+   */
+  rejectRequest: async (addresseeId) => {
+    if ((await authAxios.get(`${requestsBaseUrl}/reject/${addresseeId}`)).status !== 200) {
+      setTimeout(() => { alert('Failed to reject friend') }, 100);
+      return;
     }
+    return { type: 'REJECT_REQUEST_SUCCESS', payload: addresseeId };
   },
+  // TODO: implement confirm friend request
+  /**
+   * 
+   * @param {(number|string)} addresseeId 
+   * @returns 
+   */
+  confirmRequest: async (addresseeId) => {
+    const req = await authAxios.get(`${requestsBaseUrl}/confirm/${addresseeId}`);
+    const res = await req.data;
+    if (!res.status) {
+      setTimeout(() => { alert('Failed to confirm notice') }, 100);
+      return;
+    }
+    return { type: 'CONFIRM_REQUEST_SUCCESS', payload: { userId: addresseeId, status: res.status } };
+  },
+  // TODO: implement delete request
+  /**
+   * 
+   * @param {(number|string)} addresseeId 
+   * @returns 
+   */
+  deleteRequest: async (addresseeId) => {
+    if ((await authAxios.delete(`${requestsBaseUrl}/delete/${addresseeId}`)).status !== 200) {
+      setTimeout(() => { alert('Failed to delete request') }, 100);
+      return;
+    }
+    return { type: 'DELETE_REQUEST_SUCCESS', payload: addresseeId };
+  },
+  // TODO: implement delete friend
+  /**
+   * 
+   * @param {(number|string)} addresseeId 
+   * @returns 
+   */
+  deleteFriend: async (addresseeId) => {
+    if ((await authAxios.get(`${friendsBaseUrl}/delete/${addresseeId}`)).status !== 200) {
+      setTimeout(() => { alert('Failed to delete friend') }, 100);
+      return;
+    }
+    return { type: 'DELETE_FRIEND_SUCCESS', payload: addresseeId };
+  },
+  // TODO: implement block user
+  /**
+   * 
+   * @param {(number|string)} addresseeId 
+   * @returns 
+   */
+  blockUser: async (addresseeId) => {
+    if ((await authAxios.get(`${blockBaseUrl}/create/${addresseeId}`)).status !== 200) {
+      setTimeout(() => { alert('Failed to block user') }, 100);
+      return;
+    }
+    return { type: 'BLOCK_USER_SUCCESS', payload: addresseeId };
+  },
+  // TODO: implement unblock user
+  /**
+   * 
+   * @param {(number|string)} addresseeId 
+   * @returns 
+   */
+  unblockUser: async (addresseeId) => {
+    if ((await authAxios.get(`${blockBaseUrl}/delete/${addresseeId}`)).status !== 200) {
+      setTimeout(() => { alert('Failed to unblock user') }, 100);
+      return;
+    }
+    return { type: 'UNBLOCK_USER_SUCCESS', payload: addresseeId };
+  }
 }
 
 export default userActions;

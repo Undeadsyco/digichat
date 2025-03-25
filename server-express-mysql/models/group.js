@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => sequelize.define('group', {
       key: 'userId'
     }
   },
-  groupName: {
+  name: {
     type: DataTypes.STRING(45),
     allowNull: false
   },
@@ -28,17 +28,7 @@ module.exports = (sequelize, DataTypes) => sequelize.define('group', {
     type: DataTypes.STRING(500),
     allowNull: true
   },
-  likes: {
-    type: DataTypes.INTEGER(5).ZEROFILL,
-    allowNull: false,
-    defaultValue: '00000',
-  },
-  dislikes: {
-    type: DataTypes.INTEGER(5).ZEROFILL,
-    allowNull: false,
-    defaultValue: '00000',
-  },
-  private: {
+  privacy: {
     type: DataTypes.TINYINT(1),
     allowNull: false,
     defaultValue: '0',

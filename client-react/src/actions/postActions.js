@@ -13,74 +13,41 @@ const basePostUrl = "/api/posts",
  * @type {postActions}
  */
 const postActions = {
-  getPosts: {
-    key: 'GET_POSTS',
-    /** @returns {Promise<import("../../../server-express-mysql/controllers/PostController").post[]>} */
-    action: async () => {
-      try {
-        const req = await authAxios.get(`${basePostUrl}`);
-        const res = await req.data;
-        return res.posts;
-      } catch (error) {
-        console.log(error);
-      }
-    }
+  getPosts: async () => {
+    const req = await authAxios.get(`${basePostUrl}`);
+    const res = await req.data;
+    return res.posts.reverse();
   },
-  createPost: {
-    key: 'CREATE_POST',
-    action: async (postData) => {
-      try {
-        const req = await authAxios.post(`${basePostUrl}`, { ...postData });
-        const res = await req.data;
-        return res.post;
-      } catch (error) {
-        console.log(error);
-      }
-    }
+  createPost: async (postData) => {
+    const req = await authAxios.post(`${basePostUrl}`, { ...postData });
+    const res = await req.data;
+    return res.post;
   },
-  editPost: {
-    key: 'EDIT_POST',
-    action: async (post) => {
-      try {
-        const req = await authAxios.put(`${basePostUrl}/${post.postId}`, post);
-        const res = await req.data;
-        return res.post;
-      } catch (error) {
-        console.log(error);
-      }
+  editPost: async (post) => {
+    if ((await authAxios.put(`${basePostUrl}/${post.postId}`, post)).status !== 200) {
+      setTimeout(() => { alert('Edit Failed') }, 100);
+      return;
     }
+    return post;
   },
-  deletePost: {
-    key: 'DELETE_POST',
-    action: async (postId) => {
-      if ((await authAxios.delete(`${basePostUrl}/${postId}`)).status !== 200) {
-        setTimeout(() => { alert('Delete Failed') }, 100);
-        return;
-      }
-      return postId;
+  deletePost: async (postId) => {
+    if ((await authAxios.delete(`${basePostUrl}/${postId}`)).status !== 200) {
+      setTimeout(() => { alert('Delete Failed') }, 100);
+      return;
     }
+    return true;
   },
-  createComment: {
-    key: 'CREATE_COMMENT',
-    action: async (comment) => {
-      try {
-        const req = await authAxios.post(`${baseCommentUrl}`, comment);
-        const res = await req.data;
-        return res.comment;
-      } catch (error) {
-        console.log(error)
-      }
-    }
+  createComment: async (comment) => {
+    const req = await authAxios.post(`${baseCommentUrl}`, comment);
+    const res = await req.data;
+    return res.comment;
   },
-  deleteComment: {
-    key: 'DELETE_COMMENT',
-    action: async ({ commentId, postId }) => {
-      if ((await authAxios.delete(`${baseCommentUrl}/${commentId}`)).status !== 200) {
-        setTimeout(() => { alert('Delete Failed') }, 100);
-        return;
-      }
-      return { commentId, postId };
+  deleteComment: async (commentId) => {
+    if ((await authAxios.delete(`${baseCommentUrl}/${commentId}`)).status !== 200) {
+      setTimeout(() => { alert('Delete Failed') }, 100);
+      return;
     }
+    return true;
   }
 }
 

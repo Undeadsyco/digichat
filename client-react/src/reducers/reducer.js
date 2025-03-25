@@ -12,8 +12,6 @@
  * @property {import("../../../server-express-mysql/controllers/PostController").post[]} groupPosts
  */
 const initialState = {
-  users: [],
-  posts: [],
   groups: [],
   profile: undefined,
   signupStatus: {},

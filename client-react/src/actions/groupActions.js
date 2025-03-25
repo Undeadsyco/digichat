@@ -12,177 +12,81 @@ const baseGroupUrl = "/api/groups", baseMembershipUrl = `${baseGroupUrl}/members
  * @type {groupActions}
  */
 const groupActions = {
-  createGroup: {
-    key: 'CREATE_GROUP',
-    /** 
-     * @param {{ name: string, description: string, isPrivate: boolean }} obj
-     * @returns {Promise<import("../../../server-express-mysql/controllers/GroupController").group>}
-     */
-    action: async (obj) => {
-      try {
-        const req = await authAxios.post(`${baseGroupUrl}`, obj);
-        const res = await req.data;
-        return res.group;
-      } catch (error) {
-        console.log(error);
-      }
-    }
+  createGroup: async (group) => {
+    const req = await authAxios.post(`${baseGroupUrl}`, group);
+    const res = await req.data;
+    return res.group;
   },
-  getGroups: {
-    key: 'GET_GROUPS',
-    /** @returns {Promise<import("../../../server-express-mysql/controllers/GroupController").group[]>} */
-    action: async () => {
-      try {
-        const req = await authAxios.get(`${baseGroupUrl}`);
-        const res = await req.data;
-        return res.groups;
-      } catch (error) {
-        console.log(error);
-      }
-    }
+  getGroups: async () => {
+    const req = await authAxios.get(`${baseGroupUrl}`);
+    const res = await req.data;
+    return res.groups.reverse();
   },
-  getGroup: {
-    key: 'GET_GROUP',
-    /** 
-     * @param {(string|number)} groupId
-     * @returns {Promise<import("../../../server-express-mysql/controllers/GroupController").group>}
-     */
-    action: async (groupId) => {
-      try {
-        const req = await authAxios.get(`${baseGroupUrl}/${groupId}`);
-        const res = await req.data;
-        return res.group;
-      } catch (error) {
-        console.log(error);
-      }
-    }
+  // TODO: implement get group profile
+  getGroup: async (groupId) => {
+    const req = await authAxios.get(`${baseGroupUrl}/${groupId}`);
+    const res = await req.data;
+    return res.group;
   },
-  editGroup: {
-    key: 'EDIT_GROUP',
-    /** 
-     * @param {{ groupId: (string|number), name: string, description: string, isPrivate: boolean }} group
-     * @returns {Promise<import("../../../server-express-mysql/controllers/GroupController").group>}
-     */
-    action: async ({ groupId, description }) => {
-      try {
-        if ((await authAxios.put(`${baseGroupUrl}/${groupId}`, { description })).status !== 200) {
-          setTimeout(() => alert('was unable to edit group'), 100);
-          return;
-        }
-        return { groupId, description };
-      } catch (error) {
-        console.log(error);
-      }
+  // TODO: implement edit group desctiprion
+  editGroup: async ({ groupId, description }) => {
+    if ((await authAxios.put(`${baseGroupUrl}/${groupId}`, { description })).status !== 200) {
+      setTimeout(() => alert('was unable to edit group'), 100);
+      return;
     }
+    return { groupId, description };
   },
-  deleteGroup: {
-    key: 'DELETE_GROUP',
-    /** 
-     * @param {(string|number)} groupId
-     * @returns {(string|number)}
-     */
-    action: async (groupId) => {
-      try {
-        if ((await authAxios.delete(`${baseGroupUrl}/${groupId}`)).status !== 200) {
-          setTimeout(() => alert('was unable to delete group'), 100);
-          return;
-        }
-        return groupId;
-      } catch (error) {
-        console.log(error);
-      }
+  // TODO: implement delete group
+  deleteGroup: async (groupId) => {
+    if ((await authAxios.delete(`${baseGroupUrl}/${groupId}`)).status !== 200) {
+      setTimeout(() => alert('was unable to delete group'), 100);
+      return;
     }
+    return groupId;
   },
-  joinGroup: {
-    key: 'JOIN_GROUP',
-    /** 
-     * @param {(string|number)} groupId
-     * @returns {(string|number)}
-     */
-    action: async (groupId) => {
-      try {
-        if ((await authAxios.post(`${baseMembershipUrl}/join/${groupId}`)).status !== 201) {
-          setTimeout(() => alert('was unable to join group'), 100);
-          return;
-        }
-        return groupId;
-      } catch (error) {
-        console.log(error);
-      }
+  // TODO: implement send group request
+  // TODO: implement cancel group request
+  // TODO: implement accept group request
+  // TODO: implement reject group request
+  joinGroup: async (groupId) => {
+    if ((await authAxios.post(`${baseMembershipUrl}/join/${groupId}`)).status !== 201) {
+      setTimeout(() => alert('was unable to join group'), 100);
+      return;
     }
+    return groupId;
   },
-  removeUser: {
-    key: 'REMOVE_USER',
-    /** 
-     * @param {{ groupId: (string|number), userId: (string|number) }} ids
-     * @returns {(string|number)}
-     */
-    action: async ({ groupId, userId }) => {
-      try {
-        if ((await authAxios.delete(`${baseMembershipUrl}/remove/${groupId}/${userId}`)).status !== 200) {
-          setTimeout(() => alert('was unable to remove user'), 100);
-          return;
-        }
-        return userId;
-      } catch (error) {
-        console.log(error);
-      }
+  // TODO: implement remove user
+  removeUser: async ({ groupId, userId }) => {
+    if ((await authAxios.delete(`${baseMembershipUrl}/remove/${groupId}/${userId}`)).status !== 200) {
+      setTimeout(() => alert('was unable to remove user'), 100);
+      return;
     }
+    return userId;
   },
-  promoteUser: {
-    key: 'PROMOTE_USER',
-    /** 
-     * @param {{ groupId: (string|number), userId: (string|number) }} ids
-     * @returns {(string|number)}
-     */
-    action: async ({ groupId, userId }) => {
-      try {
-        if ((await authAxios.put(`${baseMembershipUrl}/promote/${groupId}/${userId}`, { role: 'admin' })).status !== 200) {
-          setTimeout(() => alert('was unable to promote user'), 100);
-          return;
-        }
-        return userId;
-      } catch (error) {
-        console.log(error);
-      }
+  // TODO: implement promote user
+  promoteUser: async ({ groupId, userId }) => {
+    if ((await authAxios.put(`${baseMembershipUrl}/promote/${groupId}/${userId}`, { role: 'admin' })).status !== 200) {
+      setTimeout(() => alert('was unable to promote user'), 100);
+      return;
     }
+    return userId;
   },
-  demoteUser: {
-    key: 'DEMOTE_USER',
-    /** 
-     * @param {{ groupId: (string|number), userId: (string|number) }} ids
-     * @returns {(string|number)}
-     */
-    action: async ({ groupId, userId }) => {
-      try {
-        if ((await authAxios.put(`${baseMembershipUrl}/demote/${groupId}/${userId}`, { role: 'member' })).status !== 200) {
-          setTimeout(() => alert('was unable to demote user'), 100);
-          return;
-        }
-        return userId;
-      } catch (error) {
-        console.log(error);
-      }
+  // TODO: implement demote user
+  demoteUser: async ({ groupId, userId }) => {
+    if ((await authAxios.put(`${baseMembershipUrl}/demote/${groupId}/${userId}`, { role: 'member' })).status !== 200) {
+      setTimeout(() => alert('was unable to demote user'), 100);
+      return;
     }
+    return userId;
   },
-  transferOwnership: {
-    key: 'TRANSFER_OWNERSHIP',
-    /** 
-     * @param {{ groupId: (string|number), userId: (string|number) }} ids
-     * @returns {(string|number)}
-     */
-    action: async ({ groupId, userId }) => {
-      try {
-        if ((await authAxios.put(`${baseMembershipUrl}/transfer/${groupId}/${userId}`)).status !== 200) {
-          setTimeout(() => alert('was unable to transfer ownership'), 100);
-          return;
-        }
-        return userId;
-      } catch (error) {
-        console.log(error);
-      }
+  // TODO: implement transfer ownership
+  transferOwnership: async ({ groupId, userId }) => {
+    if ((await authAxios.put(`${baseMembershipUrl}/transfer/${groupId}/${userId}`)).status !== 200) {
+      setTimeout(() => alert('was unable to transfer ownership'), 100);
+      return;
     }
-  }
+    return userId;
+  },
 }
 
 

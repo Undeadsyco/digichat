@@ -1,13 +1,15 @@
-var express = require("express");
-var path = require("path");
-var cookieParser = require("cookie-parser");
-var logger = require("morgan");
-var models = require("./models");
-var cors = require("cors");
+require('dotenv').config({ path: ['.env', '.env.development'], override: false });
+const path = require("path");
+const express = require("express");
+const cookieParser = require("cookie-parser");
+const logger = require("morgan");
+const cors = require("cors");
 
-const apiRouter = require("./routes");
+const models = require("./models");
 
-var app = express();
+const apiRouter = require("./routes/api");
+
+const app = express();
 
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
@@ -20,20 +22,22 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "../client-react/build")));
 app.use(cors());
-
-app.get('/', (req, res) => {
-  if (process.env.NODE_ENV === "production") {}
-
-  res.status(200).sendFile(path.join(__dirname, "../client-react/build/index.html"));
-});
 
 app.use("/api", apiRouter);
 
+app.get(/login|signup|feed|profile|group|static/,
+  express.static(path.join(__dirname, "./public/build")),
+  (req, res) => res.sendFile(path.join(__dirname, "./public/build/index.html"))
+);
+
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, "./public/index.html")));
+
+app.use(/((\/\w+)+)*\/?(\S+\.)+(png|jpg|ico|html|css|js|json)/, express.static(path.join(__dirname, "./public/build")));
+
 app.use(function ({ error }, req, res, next) {
   if (!error) next();
-  
+
   console.error("error", error);
   // write error to log if created and create if not
 
@@ -41,15 +45,9 @@ app.use(function ({ error }, req, res, next) {
 });
 
 app.use(function (req, res, next) {
-  const tag = req.url.split(".")[1]
-  console.log(tag)
-  if (tag === "ico") res.status(200).end();
-  else res.status(404).end();
+  res.status(404).end();
 });
 
-models.sequelize.sync().then(() => {
-  console.log(models.sequelize.models)
-  console.log("DB Sync'd up");
-});
+models.sequelize.sync();
 
 module.exports = app;

@@ -2,7 +2,6 @@
 
 const Sequelize = require('sequelize');
 const env = process.env.NODE_ENV || 'development';
-const config = require(__dirname + '/../config/config.json')[env];
 
 const associations = require('./rel/associations');
 const db = {};
@@ -14,13 +13,30 @@ const groupModel = require('./group');
 const membershipModel = require('./membership');
 const postModel = require('./post');
 const commentModel = require('./comment');
+const requestModel = require('./request');
+const blockModel = require('./block');
 
 /** @type {Sequelize} */
 let sequelize;
-if (config.use_env_variable) {
-  sequelize = new Sequelize(process.env[config.use_env_variable], config);
+
+if (env === 'development') {
+  require('dotenv').config({ path: __dirname + '/../.env.development', override: true });
+  sequelize = new Sequelize(process.env.DATABASE_NAME, process.env.DATABASE_USERNAME, process.env.DATABASE_PASSWORD, {
+    host: process.env.DATABASE_IP,
+    dialect: 'mysql',
+  });
 } else {
-  sequelize = new Sequelize(config.database, config.username, config.password, config);
+  console.log('database', process.env.DATABASE_NAME);
+  console.log('username', process.env.DATABASE_USERNAME);
+  console.log('password', process.env.DATABASE_PASSWORD);
+
+  sequelize = new Sequelize(process.env.DATABASE_NAME, process.env.DATABASE_USERNAME, process.env.DATABASE_PASSWORD, {
+    host: `/cloudsql/${process.env.DATABASE_INSTANCE}`,
+    dialect: 'mysql',
+    dialectOptions: {
+      socketPath: `/cloudsql/${process.env.DATABASE_INSTANCE}`,
+    }
+  });
 }
 
 db.user = usermodel(sequelize, Sequelize.DataTypes);
@@ -29,6 +45,8 @@ db.group = groupModel(sequelize, Sequelize.DataTypes);
 db.membership = membershipModel(sequelize, Sequelize.DataTypes);
 db.post = postModel(sequelize, Sequelize.DataTypes);
 db.comment = commentModel(sequelize, Sequelize.DataTypes);
+db.request = requestModel(sequelize, Sequelize.DataTypes);
+db.block = blockModel(sequelize, Sequelize.DataTypes);
 
 Object.keys(db).forEach(modelName => {
   if (db[modelName].associate) {

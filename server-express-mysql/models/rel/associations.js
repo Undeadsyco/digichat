@@ -7,12 +7,13 @@
  * @property {import('sequelize').ModelStatic<any>} post
  * @property {import('sequelize').ModelStatic<any>} comment
  * @property {import('sequelize').ModelStatic<any>} rection
+ * @property {import('sequelize').ModelStatic<any>} request
  * 
  * 
  * @param {models} models 
  */
 module.exports = associations = (models) => {
-
+  // =========================================
   models.user.hasMany(models.group, { as: 'groups', foreignKey: 'ownerId' });
   models.group.belongsTo(models.user, { as: 'owner', foreignKey: 'ownerId' });
 
@@ -23,6 +24,7 @@ module.exports = associations = (models) => {
     foreignKey: 'userId',
     otherKey: 'groupId'
   });
+
   models.group.belongsToMany(models.user, {
     through: {
       model: models.membership,
@@ -44,57 +46,25 @@ module.exports = associations = (models) => {
 
   // =========================================
 
-  // group posts association
+  // group-to-posts association
   models.group.hasMany(models.post, { foreignKey: 'groupId' });
   models.post.belongsTo(models.group, { foreignKey: 'groupId' });
 
   // =========================================
+  // relationship-to-user association
+  models.relationship.belongsTo(models.user, { as: 'register', foreignKey: 'registerId', onDelete: 'CASCADE' });
+  models.relationship.belongsTo(models.user, { as: 'addressee', foreignKey: 'addresseeId', onDelete: 'CASCADE' });
 
-  // user relationships association
+  // user-to-relationships association
+  models.user.hasMany(models.relationship, { as: 'relationships', foreignKey: 'registerId', constraints: false });
+  // user-to-user relationships association
   models.user.belongsToMany(models.user, {
     through: {
       model: models.relationship,
-      scope: { status: ['pending', 'accepted', 'rejected'] }
-    },
-    as: 'incoming',
-    foreignKey: 'registerId',
-    otherKey: 'addresseeId',
-  });
-  models.user.belongsToMany(models.user, {
-    through: {
-      model: models.relationship,
-      scope: { status: ['friends'] }
     },
     as: 'friends',
     foreignKey: 'registerId',
     otherKey: 'addresseeId',
-  });
-  models.user.belongsToMany(models.user, {
-    through: {
-      model: models.relationship,
-      scope: { status: ['pending', 'denied'] }
-    },
-    as: 'outgoing',
-    foreignKey: 'addresseeId',
-    otherKey: 'registerId',
-  });
-  models.user.belongsToMany(models.user, {
-    through: {
-      model: models.relationship,
-      scope: { status: ['denied'] }
-    },
-    as: 'denied',
-    foreignKey: 'addresseeId',
-    otherKey: 'registerId',
-  });
-  models.user.belongsToMany(models.user, {
-    through: {
-      model: models.relationship,
-      scope: { status: ['blocked'] }
-    },
-    as: 'blocked',
-    foreignKey: 'addresseeId',
-    otherKey: 'registerId',
   });
 
   // =========================================
@@ -111,7 +81,57 @@ module.exports = associations = (models) => {
 
   // =========================================
 
-  // post comments association
+  // post-to-comments association
   models.post.hasMany(models.comment, { as: 'comments', foreignKey: 'postId' });
   models.comment.belongsTo(models.post, { as: 'post', foreignKey: 'postId' });
+
+  // =========================================
+  // user-to-requests association
+  models.request.belongsTo(models.user, { as: 'register', foreignKey: 'registerId', onDelete: 'CASCADE', constraints: false });
+  models.user.hasMany(models.request, { as: 'outgoing', foreignKey: 'registerId' });
+
+  models.request.belongsTo(models.user, { as: 'addressee', foreignKey: 'addresseeId', onDelete: 'CASCADE', constraints: false });
+  models.user.hasMany(models.request, { as: 'incoming', foreignKey: 'addresseeId' });
+
+  // user-to-user request association
+  models.user.belongsToMany(models.user, {
+    through: models.request,
+    as: 'requests',
+    foreignKey: 'registerId',
+    otherKey: 'addresseeId'
+  });
+  models.user.belongsToMany(models.user, {
+    through: models.request,
+    as: 'requesters',
+    foreignKey: 'addresseeId',
+    otherKey: 'registerId'
+  });
+
+  // =========================================
+  // group requests association
+  models.request.belongsTo(models.group, { as: 'group', foreignKey: 'groupId' });
+  models.group.hasMany(models.request, { as: 'requests', foreignKey: 'groupId' });
+
+  // =========================================
+  // block-to-user association
+  models.block.belongsTo(models.user, { as: 'register', foreignKey: 'registerId', onDelete: 'CASCADE' });
+  models.block.belongsTo(models.user, { as: 'addressee', foreignKey: 'addresseeId', onDelete: 'CASCADE' });
+
+  // user-to-block association
+  models.user.hasMany(models.block, { foreignKey: 'registerId', constraints: false });
+  models.user.hasMany(models.block, { foreignKey: 'addresseeId', constraints: false });
+
+  // user-to-user block association
+  models.user.belongsToMany(models.user, {
+    through: models.block,
+    as: 'blocking',
+    foreignKey: 'registerId',
+    otherKey: 'addresseeId'
+  });
+  models.user.belongsToMany(models.user, {
+    through: models.block,
+    as: 'blocked',
+    foreignKey: 'registerId',
+    otherKey: 'addresseeId'
+  });
 }

@@ -51,7 +51,7 @@ module.exports = (sequelize, DataTypes) => sequelize.define('post', {
     allowNull: false,
     defaultValue: '00000'
   },
-  private: {
+  privacy: {
     type: DataTypes.TINYINT(1),
     allowNull: false,
     defaultValue: '0',

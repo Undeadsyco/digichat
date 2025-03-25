@@ -3,27 +3,47 @@
  * @typedef {import('../../types').PostObject} post
  */
 
-const { postAssociations } = require('./associationObjs');
+const { Op } = require('sequelize');
+const Controller = require('./Controller');
 
-module.exports = class PostController {
-  static #model = require('../models/index').post;
+module.exports = class PostController extends Controller {
+  static #postAssociations = [
+    {
+      association: 'author',
+      attributes: ['userId', 'userName'],
+    },
+    {
+      association: 'comments',
+      attributes: ['commentId', 'authorId', 'body', 'createdAt'],
+      include: [
+        {
+          association: 'author',
+          attributes: ['userId', 'userName'],
+        }
+      ]
+    }
+  ]
 
   /**
    * 
-   * @param {*} id 
-   * @param {*} populate 
+   * @param {(number|string)} id
    * @returns 
    */
-  static async #getPostById(id, populate = false) {
-    return await PostController.#model.findByPk(id,
-      populate ? { include: postAssociations } : {}
+  static async #getPostById(id) {
+    return await PostController.postModel.findByPk(id,
+      { include: PostController.#postAssociations }
     );
   }
 
-  static async #getAllPosts(filters = {}, populate = false) {
-    return await PostController.#model.findAll({
+  /**
+   * 
+   * @param {Object} filters
+   * @returns
+   */
+  static async #getAllPosts(filters = {}) {
+    return await PostController.postModel.findAll({
       where: filters,
-      include: populate ? postAssociations : []
+      include: PostController.#postAssociations
     });
   }
 
@@ -34,9 +54,50 @@ module.exports = class PostController {
    * @param {import("express").NextFunction} next 
    */
   static async getPublicPosts(req, res, next) {
-    if (!req.token) next({ error: new Error("Token not found") });
+    if (!req.token) res.redirect("/login");
     try {
-      const posts = await PostController.#getAllPosts({ private: false }, true);
+      const posts = await PostController.#getAllPosts({
+        [Op.and]: {
+          privacy: '0',
+          [Op.or]: {
+            groupId: {
+              [Op.in]: [
+                // owned groups
+                ...(await PostController.getOwnedGroupsIds(req.token.userId)),
+
+                // joined groups
+                ...(await PostController.getJoinedGroupsIds(req.token.userId)),
+              ],
+            },
+            authorId: {
+              [Op.and]: {
+                [Op.in]: [
+                  // user
+                  req.token.userId,
+                  // friends
+                  ...(await PostController.getFriendsIds(req.token.userId)),
+
+                  // friends of friends
+                  ...(await PostController.getFriendsOfFriendsIds(req.token.userId)),
+                ],
+                [Op.notIn]: [
+                  // Blocked Users
+                  ...(await PostController.getBlockedUsersIds(req.token.userId)),
+
+                  // blocking users
+                  ...(await PostController.getBlockingUsersIds(req.token.userId)),
+                ]
+              }
+            }
+          }
+        }
+      });
+
+      // loop posts to get count of comments
+      for (let post of posts) {
+        post.dataValues.commentCount = await post.countComments();
+      }
+
       res.hasHeader('Content-Type', 'application/json');
       res.send(JSON.stringify({ posts }));
     } catch (error) {
@@ -51,16 +112,23 @@ module.exports = class PostController {
    * @param {import("express").NextFunction} next 
    */
   static async createPost(req, res, next) {
-    if (!req.token) next({ error: new Error("Token not found") });
+    if (!req.token) res.redirect("/login");
     try {
-      const { groupId, title, body, private: isPrivate } = req.body;
-      const post = await PostController.#model.create({ authorId: req.token.userId, groupId, title, body, private: isPrivate });
-      const author = await post.getAuthor();
-      const comments = await post.getComments();
+      const { groupId, title, body, privacy } = req.body;
+      const post = await PostController.postModel.create({
+        authorId: req.token.userId,
+        groupId,
+        title,
+        body,
+        privacy: privacy === 'public' ? '0' : '1',
+      });
+      const author = await post.getAuthor({
+        attributes: ['userId', 'userName'],
+      });
 
       if (!post) throw new Error('Post not created');
 
-      res.status(201).send({ post: { ...post.dataValues, author, comments } });
+      res.status(201).send({ post: { ...post.dataValues, author } });
     } catch (error) {
       next({ error });
     }
@@ -73,18 +141,20 @@ module.exports = class PostController {
    * @param {import("express").NextFunction} next 
    */
   static async editPostBody(req, res, next) {
-    if (!req.token) next({ error: new Error("Token not found") });
+    if (!req.token) res.redirect("/login");
     try {
-      const post = await PostController.#getPostById(req.params.postId, true);
+      const post = await PostController.#getPostById(req.params.postId);
       if (!post) throw new Error('Post not found');
-      if (post.authorId !== token.userId) throw new Error('Unauthorized');
+      if (post.authorId !== req.token.userId) throw new Error('Unauthorized');
 
       const { body } = req.body;
-      post.body = body;
-      post.edited = true;
-      await post.save();
+      post.set({
+        body,
+        edited: true,
+      });
+      const update = await post.save();
 
-      res.status(200).send({ post });
+      res.status(200).end();
     } catch (error) {
       next({ error });
     }
@@ -97,11 +167,11 @@ module.exports = class PostController {
    * @param {import("express").NextFunction} next 
    */
   static async deletePost(req, res, next) {
-    if (!req.token) next({ error: new Error("Token not found") });
+    if (!req.token) res.redirect("/login");
     try {
       const post = await PostController.#getPostById(req.params.postId);
       if (!post) throw new Error('Post not found');
-      if (post.authorId !== token.userId) throw new Error('Unauthorized');
+      if (post.authorId !== req.token.userId) throw new Error('Unauthorized');
 
       await post.destroy();
       res.status(200).end();

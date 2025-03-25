@@ -15,7 +15,7 @@ var authService = {
    * @param {tokenData} user 
    * @returns {string} JSON Web Token
    */
-  signUser: (user) => (jwt.sign({ ...user }, 'secretKey', { expiresIn: '4h' })),
+  signUser: (user) => (jwt.sign({ ...user }, 'secretKey', { expiresIn: '24h' })),
   /**
    * verifies the given token using secret key and returns the decoded token
    * @param {string} token 

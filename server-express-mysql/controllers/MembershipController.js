@@ -7,31 +7,32 @@
  * @property {Date} updatedAt
  */
 
-module.exports = class MembershipController {
-  static #model = require('../models/index').membership;
+const Controller = require("./Controller");
+
+module.exports = class MembershipController extends Controller {
 
   static async #getAll(filters = {}, populate = false) {
-    return await MembershipController.#model.findAll({
+    return await MembershipController.membershipModel.findAll({
       where: filters,
     });
   }
 
   static async #getOne(filters = {}, populate = false) {
-    return await MembershipController.#model.findOne({
+    return await MembershipController.membershipModel.findOne({
       where: filters,
     });
   }
 
   static async #createOne(membership) {
-    return await MembershipController.#model.create(membership);
+    return await MembershipController.membershipModel.create(membership);
   }
 
   static async #updateOne(membership, filters) {
-    return await MembershipController.#model.update(membership, { where: filters });
+    return await MembershipController.membershipModel.update(membership, { where: filters });
   }
 
   static async #deleteOne(filters) {
-    return await MembershipController.#model.destroy({ where: filters });
+    return await MembershipController.membershipModel.destroy({ where: filters });
   }
 
   /**

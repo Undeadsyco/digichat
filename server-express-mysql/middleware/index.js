@@ -1,3 +1,4 @@
+const { TokenExpiredError } = require("jsonwebtoken");
 const { signUser, verifyUser } = require("../services/auth");
 
 module.exports = {
@@ -15,10 +16,8 @@ module.exports = {
       const token = signUser({ userId, email, password, admin });
       if (!token) throw new Error("Token not created");
 
-      delete user.password;
-
       res.cookie('jwt', token);
-      res.status(200).send({ user });
+      res.status(200).send({ user: { ...user, password: undefined } });
     } catch (error) {
       next({ error });
     }
@@ -32,15 +31,24 @@ module.exports = {
   decodeToken: (req, res, next) => {
     try {
       const cookie = req.cookies.jwt
-      if (!cookie) throw new Error("Token not found");
+      if (!cookie) {
+        res.redirect("/login");
+        return;
+      }
 
       const token = verifyUser(cookie);
-      if (!token) throw new Error("Invalid Token");
+      if (!token) {
+        res.redirect("/login");
+        return;
+      }
 
       req.token = token;
       next();
     } catch (error) {
-      next({ error });
+      if (error instanceof TokenExpiredError) {
+        res.clearCookie('jwt');
+        res.redirect('/api/logout');
+      } else next({ error });
     }
   }
 }
